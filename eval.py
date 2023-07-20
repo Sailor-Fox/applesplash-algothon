@@ -51,7 +51,7 @@ def calcPL(prcHist):
         cash -= curPrices.dot(deltaPos) + comm    #updates the cash position based on how much the day's trades cost
         curPos = np.array(newPos)    #updates our position (how many of each stock we have)
         posValue = curPos.dot(curPrices)    #updates our current value (number of each stock times the value of the each stock)
-        todayPL = cash + posValue - value    #today's PL = cash spent/gained + valuation of current stocks - the previous total value
+        todayPL = cash + posValue - value    #today's PL = cash spent/gained in total + valuation of current stocks - the previous day's total value
         todayPLL.append(todayPL)    #adds on today's PL to the array storing the PL of each day (this gets used for scoring later on)
         value = cash + posValue    #updates the total value
         ret = 0.0    #restore daily return to default
