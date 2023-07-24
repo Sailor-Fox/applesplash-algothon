@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import numpy as np
+import numpy as np #testying
 
 nInst=50    #number of stocks
 currentPos = np.zeros(nInst)    #we start with nothing
