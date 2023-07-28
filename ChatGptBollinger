@@ -1,0 +1,66 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def clean_prices_file(file_path):
+    # Read the contents of the 'prices.txt' file
+    df = pd.read_csv(file_path, header=None, sep='\s+')
+
+    # Convert all non-numeric values to NaN
+    df = df.apply(pd.to_numeric, errors='coerce')
+
+    # Drop rows with any NaN values
+    df = df.dropna(how='any')
+
+    # Save the cleaned DataFrame back to the file
+    df.to_csv(file_path, header=False, index=False, sep=' ')
+    print("The 'prices.txt' file has been cleaned and saved.")
+
+    return df
+
+def calculate_bollinger_bands(prices, window, num_std):
+    rolling_mean = prices.rolling(window=window).mean()
+    rolling_std = prices.rolling(window=window).std()
+    upper_band = rolling_mean + (rolling_std * num_std)
+    lower_band = rolling_mean - (rolling_std * num_std)
+    return upper_band, lower_band
+
+def getMyPosition(prices, window=20, num_std=2, initial_balance=10000):
+    # Convert the prices to a DataFrame
+    df_prices = pd.DataFrame(prices)
+
+    # Calculate Bollinger Bands for each stock separately
+    upper_band, lower_band = calculate_bollinger_bands(df_prices, window, num_std)
+
+    signals = np.zeros_like(prices)  # Initialize signals array with zeros
+
+    # Generate signals based on the Bollinger Bands strategy for each stock separately
+    signals[prices > upper_band.values] = -1  # Sell signal
+    signals[prices < lower_band.values] = 1   # Buy signal
+
+    capital = initial_balance
+    position = np.zeros(prices.shape[0])
+    for t in range(1, prices.shape[1]):
+        new_positions = np.array([np.trunc(capital / prices[i, t]) for i in range(prices.shape[0])])
+        position_diff = new_positions - position
+        capital -= position_diff.dot(prices[:, t])  # Deduct the cost of trades
+        position = new_positions
+
+    return position.astype(int)  # Return the desired positions as integers
+
+if __name__ == '__main__':
+    # Clean the prices file and load historical stock price data
+    prices_file_path = 'prices.txt'
+    cleaned_data = clean_prices_file(prices_file_path)
+    data = cleaned_data.T.values  # Transpose the data to have each column as one stock
+
+    window = 20  # Number of periods for the Bollinger Bands
+    num_std = 2   # Number of standard deviations for Bollinger Bands
+    initial_balance = 10000  # Starting capital for trading
+
+    # Get the desired positions using the Bollinger Bands strategy
+    desired_positions = getMyPosition(data, window, num_std, initial_balance)
+
+    # Print the desired positions for each stock
+    for i, position in enumerate(desired_positions):
+        print(f"Stock {i}: {position} shares")
